@@ -1,5 +1,5 @@
 ﻿#
-# OSCAppLauncherSerive
+# OSCAppLauncherService
 #
 cmake_minimum_required (VERSION 3.20)
 
@@ -9,9 +9,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_subdirectory(extern)
+
 add_subdirectory(src)
 
-add_subdirectory(extern)
 
 
 ########## OALServer
@@ -27,6 +28,7 @@ target_link_libraries(OALServer
         lib_include
 		inipp
 		osc_objlib
+		platform_objlib
 	)
 
 ########## OALSend

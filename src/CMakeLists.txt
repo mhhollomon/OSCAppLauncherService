@@ -42,3 +42,6 @@ target_link_libraries(osc_objlib
         lib_include
     )
 
+
+# this needs to come last so the platform can use stuff in lib if needed.
+add_subdirectory(platform)

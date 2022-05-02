@@ -10,6 +10,7 @@
 #include <fstream>
 #include <WinOSCSocket.h>
 #include <WinAppLauncher.hpp>
+#include <platform.hpp>
 
 const std::string rel_ini_path = "\\Documents\\OALServer.ini";
 
@@ -20,11 +21,13 @@ std::map<std::string, std::string> program_map;
 auto socket_factory = WinOSCSocketFactory();
 auto app_launcher = WinAppLauncher();
 
+Platform platform;
+
 int main() {
 	inipp::Ini<char> ini;
 
-	std::string profile_path = getenv("USERPROFILE");
-	std::string ini_file = profile_path + rel_ini_path;
+	auto ini_file = platform.get_ini_file_name();
+
 
 	std::cout << "using ini file = " << ini_file << "\n";
 
