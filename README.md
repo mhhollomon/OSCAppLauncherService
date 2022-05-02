@@ -5,9 +5,8 @@ Small [Open Sound Control](https://opensoundcontrol.org) server to launch applic
 Very much at the proof-of-concept stage.
 
 - Only listens to UDP
-- Currently, the port is hardcoded at 8888.
 - Currently, only listens to localhost interface.
-- Currently, the app list is hard coded.
+- No arguments cn be sent to the application.
 
 ## OALServer
 
