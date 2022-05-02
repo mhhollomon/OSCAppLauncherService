@@ -6,17 +6,21 @@
 */
 #include <iostream>
 
+#include <inipp.h>
+
 #include <WinOSCSocket.h>
 
-constexpr int PORT = 8888;	//The port on which to listen for incoming data
-
 int main(int argc, char**argv) {
-	if (argc < 1)
+	if (argc < 2)
 		throw std::runtime_error("Not enough arguments");
 
-	auto osc_msg = OSCMessage(argv[1]);
+	int port = 0;
+	inipp::extract(std::string(argv[1]), port);
+	std::cout << "using port : " << port << "\n";
+
+	auto osc_msg = OSCMessage(argv[2]);
 		
-	std::unique_ptr<OSCSocket> socket = WinOSCSocketFactory().create_socket(PORT, OSCSocket::Direction::WRITE);
+	std::unique_ptr<OSCSocket> socket = WinOSCSocketFactory().create_socket(port, OSCSocket::Direction::WRITE);
 
 
 

@@ -1,7 +1,7 @@
-﻿# CMakeList.txt : CMake project for OSCAppLauncherService, include source and define
-# project specific logic here.
+﻿#
+# OSCAppLauncherSerive
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.20)
 
 project ("OSCAppLauncherService" VERSION 0.1.0 LANGUAGES CXX)
 
@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(src)
+
+add_subdirectory(extern)
 
 
 ########## OALServer
@@ -23,6 +25,7 @@ target_sources(OALServer
 target_link_libraries(OALServer
     PRIVATE
         lib_include
+		inipp
 		osc_objlib
 	)
 
@@ -38,6 +41,7 @@ target_sources(OALSend
 target_link_libraries(OALSend
     PRIVATE
         lib_include
+		inipp
 		osc_objlib
 	)
 

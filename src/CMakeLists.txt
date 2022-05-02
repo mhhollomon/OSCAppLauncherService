@@ -1,5 +1,8 @@
-# yalr/src
-cmake_minimum_required(VERSION 3.8)
+#
+# OSCAppLauncherSerive/src
+#
+
+cmake_minimum_required(VERSION 3.20)
 
 ##
 ## lib-include

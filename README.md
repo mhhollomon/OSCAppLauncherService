@@ -11,9 +11,23 @@ Very much at the proof-of-concept stage.
 
 ## OALServer
 
-The server application. Listens on 127.0.0.1:8888 for UDP Datagrams.
+The server application. 
 
-if the path in the datagram is `/launch/{appkey}`, it will run the program from the built in map corresponding to `appkey`.
+Reads an ini file from `%USER_PROFILE%\\Documents\\OALServer.ini`
+
+```
+; Sample file
+[Server]
+port=7777
+
+[Applications]
+notepad=C:\Program Files\Notepad++\notepad++.exe
+reaper=C:\Program Files\REAPER (x64)\reaper.exe
+```
+
+Listens on 127.0.0.1:{port} for UDP Datagrams. If `port` is not given in the ini file, it defaults to 8888.
+
+if the path in the datagram is `/launch/{appkey}`, it will run the program listed for `appkey` in the ini file.
 
 if the path in the datagram is `/exit`, it will shutdown.
 
@@ -21,9 +35,13 @@ Otherwise it does nothing.
 
 ## OALSend
 
-Small utility to send OSC messages via UDP on 127.0.0.1:8888. The OSC path is given on the command line.
+Small utility to send OSC messages via UDP on `127.0.0.1:<port>`. The port and OSC path is given on the command line.
 
 ```
-OSCSend.exe /launch/notepad
+OSCSend.exe 7777 /launch/notepad
 ```
+
+## Tech Used
+
+* [inipp](https://github.com/mcmtroffaes/inipp) for ini parsing.
 

@@ -1,25 +1,50 @@
 ﻿// OALServer.cpp 
 //
 
+#include "inipp.h"
+
 #include <map>
+#include <stdlib.h>
 
 #include <iostream>
-
+#include <fstream>
 #include <WinOSCSocket.h>
 #include <WinAppLauncher.hpp>
 
-constexpr int PORT = 8888;	//The port on which to listen for incoming data
+const std::string rel_ini_path = "\\Documents\\OALServer.ini";
 
-const std::map<std::string, std::string> program_map = {
-	{ "notepad" , "C:\\Program Files\\Notepad++\\notepad++.exe"},
-};
+constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming data
+
+std::map<std::string, std::string> program_map;
 
 auto socket_factory = WinOSCSocketFactory();
 auto app_launcher = WinAppLauncher();
 
 int main() {
+	inipp::Ini<char> ini;
 
-	std::unique_ptr<OSCSocket> socket = socket_factory.create_socket(PORT, OSCSocket::Direction::READ);
+	std::string profile_path = getenv("USERPROFILE");
+	std::string ini_file = profile_path + rel_ini_path;
+
+	std::cout << "using ini file = " << ini_file << "\n";
+
+	std::ifstream is(ini_file);
+	ini.parse(is);
+	ini.generate(std::cout);
+
+	int port = DEFAULT_PORT;
+	inipp::extract(ini.sections["Server"]["port"], port);
+
+	if (ini.sections.find("Applications") != ini.sections.end()) {
+		program_map = ini.sections["Applications"];
+	}
+	else {
+		throw std::runtime_error("No applications found in the ini file.");
+	}
+
+	std::cout << "using port : " << port << "\n";
+
+	std::unique_ptr<OSCSocket> socket = socket_factory.create_socket(port, OSCSocket::Direction::READ);
 
 	while (1) {
 		std::cout << "Waiting for data...\n";
