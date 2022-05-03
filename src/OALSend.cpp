@@ -1,14 +1,13 @@
 ﻿// OALSend.cpp : Defines the entry point for the application.
 //
 
-/*
-	Simple udp client
-*/
 #include <iostream>
 
 #include <inipp.h>
 
-#include <WinOSCSocket.h>
+#include <platform.hpp>
+
+Platform platform;
 
 int main(int argc, char**argv) {
 	if (argc < 2)
@@ -20,9 +19,7 @@ int main(int argc, char**argv) {
 
 	auto osc_msg = OSCMessage(argv[2]);
 		
-	std::unique_ptr<OSCSocket> socket = WinOSCSocketFactory().create_socket(port, OSCSocket::Direction::WRITE);
-
-
+	std::unique_ptr<OSCSocket> socket = platform.create_socket(port, SocketDirection::WRITE);
 
 
 	//send the message

@@ -1,18 +1,13 @@
 #pragma once
 
-#include <OSCSocket.h>
+#include <socket_base.hpp>
 
-#include <ws2tcpip.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 #include <stdexcept>
 
-#pragma comment(lib,"ws2_32.lib") //Winsock Library
-
-class WinOSCSocketFactory;
-
-class WinOSCSocket : OSCSocket {
-	friend class WinOSCSocketFactory;
+class OSCSocket : public OSCSocketBase {
 	static constexpr int WS_VER = 0x0202;
 	static constexpr int BUFLEN = 512;
 	static constexpr char INTERFACE[] = "127.0.0.1";
@@ -21,13 +16,14 @@ class WinOSCSocket : OSCSocket {
 	SOCKET socket_;
 	struct sockaddr_in socket_address_;
 
+public:
 
-	WinOSCSocket(int port, OSCSocket::Direction direction) {
+	OSCSocket(int port, SocketDirection direction) {
 		WSADATA wsa;
 
 		//Initialise winsock
 		std::cout << "\nInitialising Winsock...";
-		if (WSAStartup(WinOSCSocket::WS_VER, &wsa) != 0) {
+		if (WSAStartup(OSCSocket::WS_VER, &wsa) != 0) {
 			throw std::runtime_error("Winsock Init Failed");
 			//printf("Failed. Error Code : %d", WSAGetLastError());
 		}
@@ -46,7 +42,7 @@ class WinOSCSocket : OSCSocket {
 		inet_pton(socket_address_.sin_family, INTERFACE, &socket_address_.sin_addr.S_un.S_addr);
 		socket_address_.sin_port = htons(port);
 
-		if (direction == READ) {
+		if (direction == SocketDirection::READ) {
 
 			//Bind
 			if (bind(socket_, (struct sockaddr*)&socket_address_, sizeof(socket_address_)) == SOCKET_ERROR) {
@@ -59,7 +55,6 @@ class WinOSCSocket : OSCSocket {
 
 	}
 
-public:
 	virtual std::string receive_raw() {
 		int recv_len;
 		// Add one to make sure we have a NUL on the end when reading BUFLEN bytes.
@@ -87,21 +82,11 @@ public:
 		closesocket(socket_);
 	}
 
-	virtual ~WinOSCSocket() {
+	virtual ~OSCSocket() {
 		close();
 		// Makes an ugly assumption.
 		WSACleanup();
 
 	}
-
-};
-
-class WinOSCSocketFactory :OSCSocketFactory {
-
-public :
-	virtual std::unique_ptr<OSCSocket> create_socket(int port, OSCSocket::Direction direction) {
-		return std::unique_ptr<OSCSocket>{new WinOSCSocket{ port, direction }};
-	}
-
 
 };

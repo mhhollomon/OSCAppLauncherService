@@ -45,6 +45,7 @@ target_link_libraries(OALSend
         lib_include
 		inipp
 		osc_objlib
+		platform_objlib
 	)
 
 # TODO: Add tests and install targets if needed.

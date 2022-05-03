@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <WinOSCSocket.h>
 #include <WinAppLauncher.hpp>
 #include <platform.hpp>
 
@@ -18,7 +17,6 @@ constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming da
 
 std::map<std::string, std::string> program_map;
 
-auto socket_factory = WinOSCSocketFactory();
 auto app_launcher = WinAppLauncher();
 
 Platform platform;
@@ -47,7 +45,7 @@ int main() {
 
 	std::cout << "using port : " << port << "\n";
 
-	std::unique_ptr<OSCSocket> socket = socket_factory.create_socket(port, OSCSocket::Direction::READ);
+	std::unique_ptr<OSCSocket> socket = platform.create_socket(port, SocketDirection::READ);
 
 	while (1) {
 		std::cout << "Waiting for data...\n";

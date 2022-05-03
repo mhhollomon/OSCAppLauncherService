@@ -3,13 +3,15 @@
 #include <osc.hpp>
 
 #include <memory>
+#include <iostream>
 
-class OSCSocket {
+enum class SocketDirection {
+	READ,
+	WRITE,
+};
+
+class OSCSocketBase {
 public :
-	enum Direction {
-		READ,
-		WRITE,
-	};
 
 	virtual OSCMessage recieve_osc() {
 		std::string raw_input = this->receive_raw();
@@ -25,17 +27,12 @@ public :
 	}
 	virtual void close() = 0;
 
-	virtual ~OSCSocket() = default;
+	virtual ~OSCSocketBase() = default;
 
 protected:
-	OSCSocket() = default;
+	OSCSocketBase() = default;
 
 	virtual void send_raw(std::string) = 0;
 	virtual std::string receive_raw() = 0;
-};
-
-class OSCSocketFactory {
-public :
-	virtual std::unique_ptr<OSCSocket> create_socket(int port, OSCSocket::Direction direction) = 0;
 };
 

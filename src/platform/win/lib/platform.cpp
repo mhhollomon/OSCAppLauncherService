@@ -1,4 +1,7 @@
+
 #include <platform.hpp>
+
+#pragma comment(lib,"ws2_32.lib") //Winsock Library
 
 
 std::string Platform::get_ini_file_name() {
