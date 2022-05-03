@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <WinAppLauncher.hpp>
 #include <platform.hpp>
 
 const std::string rel_ini_path = "\\Documents\\OALServer.ini";
@@ -17,14 +16,15 @@ constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming da
 
 std::map<std::string, std::string> program_map;
 
-auto app_launcher = WinAppLauncher();
 
-Platform platform;
 
 int main() {
+	Platform platform;
+
 	inipp::Ini<char> ini;
 
 	auto ini_file = platform.get_ini_file_name();
+	auto app_launcher = platform.create_application_controller();
 
 
 	std::cout << "using ini file = " << ini_file << "\n";

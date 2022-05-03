@@ -27,7 +27,7 @@ std::string OSCMessage::to_data() {
 	// OSC string are null terminated. This needs to be done BEFORE the padding.
 	retval += NULL_CHAR;
 
-	retval = pad_string(retval) + pad_string(",");
+	retval = pad_string(retval) + pad_string("," + NULL_CHAR);
 
 	return retval;
 }

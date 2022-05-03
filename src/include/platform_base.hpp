@@ -3,12 +3,13 @@
 #pragma once
 
 #include <socket_base.hpp>
+#include <application_controller_base.hpp>
 
 #include <string>
 #include <memory>
 
 
-template <class Socket_T> class PlatformBase {
+template <class Socket_T, class AppCon_T> class PlatformBase {
 
 public:
 	// returns full path and name of the ini file.
@@ -16,6 +17,10 @@ public:
 
 	virtual std::unique_ptr<Socket_T> create_socket(int port, SocketDirection direction) {
 		return std::make_unique<Socket_T>(port, direction);
+	}
+
+	 AppCon_T create_application_controller() {
+		return AppCon_T{};
 	}
 
 protected :

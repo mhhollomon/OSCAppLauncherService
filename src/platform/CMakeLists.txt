@@ -27,6 +27,7 @@ add_library(platform_objlib OBJECT)
 target_sources(platform_objlib
     PRIVATE
         "${PLATFORM_DIR}/lib/platform.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${PLATFORM_DIR}/include/osc_socket.hpp"
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/${PLATFORM_DIR}/include/platform.hpp"
     )
