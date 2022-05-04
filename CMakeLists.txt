@@ -1,7 +1,7 @@
 ﻿#
 # OSCAppLauncherService
 #
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.18)
 
 project ("OSCAppLauncherService" VERSION 0.1.0 LANGUAGES CXX)
 
@@ -23,11 +23,17 @@ target_sources(OALServer
 		"src/OALServer.cpp" 
 )
 
+if(MSVC)
+    set(config_lib "libconfig++")
+else()
+    set(config_lib "config++")
+endif()
+
 target_link_libraries(OALServer
     PRIVATE
         lib_include
 		inipp
-		libconfig++
+		${config_lib}
 		osc_objlib
 		platform_objlib
 	)
