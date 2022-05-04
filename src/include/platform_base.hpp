@@ -12,8 +12,8 @@
 template <class Socket_T, class AppCon_T> class PlatformBase {
 
 public:
-	// returns full path and name of the ini file.
-	virtual std::string get_ini_file_name() = 0;
+	// returns full path and name of the config file.
+	virtual std::string get_cfg_file_name() = 0;
 
 	virtual std::unique_ptr<Socket_T> create_socket(int port, SocketDirection direction) {
 		return std::make_unique<Socket_T>(port, direction);
@@ -24,5 +24,5 @@ public:
 	}
 
 protected :
-	const std::string INI_FILE_NAME = "OALServer.ini";
+	const std::string CFG_FILE_NAME = "OALServer.cfg";
 };

@@ -7,20 +7,30 @@ me to not only control my DAW but also start it using OSC.
 
 It will most likely grow well beyond that.
 
+## V0.2.0 Changes
+
+- ported to linux.
+- Changed format  and name of OALServer config file.
+
+
 ## OALServer
 
 The server application. 
 
-Reads an ini file from `%USER_PROFILE%\\Documents\\OALServer.ini`
+Reads an configuration file from:
+- Windows = `%USER_PROFILE%\\Documents\\OALServer.cfg`
+- Linux = `$HOME/.oal/OALServer.cfg`
 
 ```
-; Sample file
-[Server]
-port=7777
+server: {
+	port = 7777
+}
+	
+launch : {
 
-[Applications]
-notepad=C:\Program Files\Notepad++\notepad++.exe
-reaper=C:\Program Files\REAPER (x64)\reaper.exe
+	notepad = "C:\\Program Files\\Notepad++\\notepad++.exe"
+	reaper  = "C:\\Program Files\\REAPER (x64)\\reaper.exe"
+}
 ```
 
 Listens on 127.0.0.1:{port} for UDP Datagrams. If `port` is not given in the ini file, it defaults to 8888.
@@ -54,9 +64,10 @@ Add the path (e.g. `/launch/notepad`) to the `path` property of the widget.
 
 ## Tech Used
 
-* [inipp](https://github.com/mcmtroffaes/inipp) for ini parsing.
+* [libconfig](https://github.com/hyperrealm/libconfig) for configuration parsing.
 
 ## Reference
+
  * [Open Sound Control](https://opensoundcontrol.org/)
  * [Open Stage Control](https://github.com/jean-emmanuel/open-stage-control)
 

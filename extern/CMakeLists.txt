@@ -5,8 +5,10 @@ cmake_minimum_required(VERSION 3.18)
 
 include(FetchContent)
 
-add_library(inipp INTERFACE)
-target_include_directories(inipp INTERFACE inipp/)
+add_definitions(-DLIBCONFIG_STATIC)
+
+#add_library(inipp INTERFACE)
+#target_include_directories(inipp INTERFACE inipp/)
 
 FetchContent_Declare(
   libconfig

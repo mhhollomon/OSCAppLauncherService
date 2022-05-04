@@ -38,7 +38,7 @@ public:
 
 class Platform : public PlatformBase<OSCSocket, ApplicationController> {
 public:
-	virtual std::string get_ini_file_name();
+	virtual std::string get_cfg_file_name();
 	//virtual std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction);
 	//ApplicationController create_application_controller();
 

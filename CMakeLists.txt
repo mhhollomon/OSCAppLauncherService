@@ -9,9 +9,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+
+
+if(MSVC)
+    set(config_lib "libconfig++")
+else()
+    set(config_lib "config++")
+endif()
+
 add_subdirectory(extern)
 
 add_subdirectory(src)
+
 
 
 
@@ -23,16 +33,10 @@ target_sources(OALServer
 		"src/OALServer.cpp" 
 )
 
-if(MSVC)
-    set(config_lib "libconfig++")
-else()
-    set(config_lib "config++")
-endif()
 
 target_link_libraries(OALServer
     PRIVATE
         lib_include
-		inipp
 		${config_lib}
 		osc_objlib
 		platform_objlib
@@ -50,7 +54,6 @@ target_sources(OALSend
 target_link_libraries(OALSend
     PRIVATE
         lib_include
-		inipp
 		osc_objlib
 		platform_objlib
 	)

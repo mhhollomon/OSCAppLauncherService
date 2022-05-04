@@ -23,14 +23,14 @@ int main() {
 	libconfig::Config cfg;
 
 
-	auto ini_file = platform.get_ini_file_name();
+	auto cfg_file = platform.get_cfg_file_name();
 	auto app_launcher = platform.create_application_controller();
 
 
-	std::cout << "using ini file = " << ini_file << "\n";
+	std::cout << "using config file = " << cfg_file << "\n";
 
 	try {
-		cfg.readFile(ini_file);
+		cfg.readFile(cfg_file);
 
 	} catch (const libconfig::FileIOException& fioex)	{
 		std::cerr << "I/O error while reading file." << std::endl;
@@ -41,7 +41,7 @@ int main() {
 		return(EXIT_FAILURE);
 	}
 
-	// ake sure everybody agrees on where we are in the output stream.
+	// Make sure everybody agrees on where we are in the output stream.
 	std::cout.flush();
 	std::cout.sync_with_stdio();
 
