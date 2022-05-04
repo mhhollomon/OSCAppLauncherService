@@ -27,6 +27,7 @@ target_link_libraries(OALServer
     PRIVATE
         lib_include
 		inipp
+		libconfig++
 		osc_objlib
 		platform_objlib
 	)

@@ -1,27 +1,27 @@
 ﻿// OALServer.cpp 
 //
 
-#include "inipp.h"
+#include <libconfig.h++>
+#include <platform.hpp>
 
+#include <exception>
 #include <map>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <iostream>
 #include <fstream>
-#include <platform.hpp>
 
-const std::string rel_ini_path = "\\Documents\\OALServer.ini";
 
 constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming data
 
 std::map<std::string, std::string> program_map;
 
-
-
 int main() {
 	Platform platform;
 
-	inipp::Ini<char> ini;
+	libconfig::Config cfg;
+
 
 	auto ini_file = platform.get_ini_file_name();
 	auto app_launcher = platform.create_application_controller();
@@ -29,21 +29,41 @@ int main() {
 
 	std::cout << "using ini file = " << ini_file << "\n";
 
-	std::ifstream is(ini_file);
-	ini.parse(is);
-	ini.generate(std::cout);
+	try {
+		cfg.readFile(ini_file);
+
+	} catch (const libconfig::FileIOException& fioex)	{
+		std::cerr << "I/O error while reading file." << std::endl;
+		return(EXIT_FAILURE);
+	}	catch (const libconfig::ParseException& pex)  {
+		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+			<< " - " << pex.getError() << std::endl;
+		return(EXIT_FAILURE);
+	}
+
+	// ake sure everybody agrees on where we are in the output stream.
+	std::cout.flush();
+	std::cout.sync_with_stdio();
+
+	// libconfig doesn't give a stream interface - grr 
+	cfg.write(stdout);
 
 	int port = DEFAULT_PORT;
-	inipp::extract(ini.sections["Server"]["port"], port);
-
-	if (ini.sections.find("Applications") != ini.sections.end()) {
-		program_map = ini.sections["Applications"];
-	}
-	else {
-		throw std::runtime_error("No applications found in the ini file.");
-	}
-
+	cfg.lookupValue("server.port", port);
 	std::cout << "using port : " << port << "\n";
+
+	if (cfg.exists("launch")) {
+		auto& launch_settings = cfg.lookup("launch");
+		if (!launch_settings.isGroup()) {
+			std::cerr << "The 'launch' configuration must be a group\n";
+			return(4);
+		}
+
+		for (int index = 0; index < launch_settings.getLength(); ++index) {
+			program_map.insert(std::make_pair(std::string(launch_settings[index].getName()), std::string(launch_settings[index].c_str())));
+		}
+	}
+
 
 	std::unique_ptr<OSCSocket> socket = platform.create_socket(port, SocketDirection::READ);
 
