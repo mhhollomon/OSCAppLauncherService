@@ -86,9 +86,20 @@ int main() {
 			auto key = msg.method_name();
 			if (program_map.find(key) != program_map.end()) {
 
-				std::cout << "Starting program " << program_map.at(key) << "\n";
 
-				app_launcher.launch_app(program_map.at(key));
+				if (msg.arg_count() > 0 && msg.get_arg(0).isString()) {
+					const std::string arg = msg.get_arg(0).get<std::string>();
+					std::cout << "Starting program " << program_map.at(key) << "( " << arg << " )\n";
+
+					app_launcher.launch_app(program_map.at(key), arg);
+
+				}
+				else {
+					std::cout << "Starting program " << program_map.at(key) << "\n";
+
+					app_launcher.launch_app(program_map.at(key));
+
+				}
 			}
 			else {
 				std::cout << "Unknown key " << key << " - ignoring command\n";

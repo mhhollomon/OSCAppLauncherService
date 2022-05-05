@@ -20,10 +20,22 @@ class OSCMessage {
 
 		argument(char t, std::string v) : atype_(t), sarg_(v) {}
 
-		template<class T> auto get() -> T {
+		bool isString() const {
+			return ((atype_ == 's') || (atype_ == 'b'));
+		}
+
+		bool isInt() const {
+			return (atype_ == 'i');
+		}
+
+		bool isBlob() const {
+			return (atype_ == 'b');
+		}
+
+		template<class T> auto get() const -> T  {
 
 			if constexpr ( std::is_integral_v<T> ) {
-				if (atype_ == 'i') {
+				if (isInt()) {
 					return larg_;
 
 				}
@@ -34,8 +46,8 @@ class OSCMessage {
 				throw std::runtime_error("unknown type");
 			}
 		}
-		template<> auto get<std::string>() -> std::string {
-			if ((atype_ == 's') || (atype_ = 'b')) {
+		template<> auto get<std::string>() const -> std::string  {
+			if (isString()) {
 				return sarg_;
 			}
 			else {
@@ -43,14 +55,6 @@ class OSCMessage {
 			}
 		}
 
-		template<> auto get<long>() -> long {
-			if (atype_ == 'i') {
-				return larg_;
-			}
-			else {
-				throw std::runtime_error("Not a integral argument type");
-			}
-		}
 	};
 	std::string addr_;
 	std::vector<argument> args_;
@@ -69,6 +73,19 @@ public:
 	void add_arg(long);
 	void add_arg(std::string);
 	void add_arg(char, std::string_view);
+
+	int arg_count() const {
+		return args_.size();
+	}
+
+	const argument& get_arg(int index) {
+		if (index > -1 && index <= (arg_count() - 1)) {
+			return args_[index];
+		}
+		else {
+			throw std::runtime_error("Index out of range");
+		}
+	}
 
 	OSCMessage(std::string addr) { 
 		addr_ = addr;

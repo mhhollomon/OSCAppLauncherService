@@ -97,12 +97,7 @@ void OSCMessage::add_arg(char t, std::string_view value) {
 std::string OSCMessage::to_data() const {
 	// note : currently only handles datagrams (i.e. no starting size and no SLIP)
 
-	std::string retval = addr_;
-
-	// OSC string are null terminated. This needs to be done BEFORE the padding.
-	retval += NULL_CHAR;
-
-	retval = pad_string(retval);
+	std::string retval = pad_string(addr_);
 
 	std::string arg_spec = ",";
 	std::string arg_val = "";
