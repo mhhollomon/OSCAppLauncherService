@@ -21,7 +21,22 @@ public:
             //
         } else {
             // in the child;
-            execl(path_or_name.c_str(), path_or_name.c_str());
+            execl(path_or_name.c_str(), path_or_name.c_str(), (const char *)0);
+            exit(0);
+        }
+	}
+
+	virtual void launch_app(std::string path_or_name, std::string arg) {
+        auto pid = fork();
+        if (pid == -1) {
+            throw std::runtime_error("Fork did not work");
+        } else if(pid > 0) {
+
+            // in the parent;
+            //
+        } else {
+            // in the child;
+            execl(path_or_name.c_str(), path_or_name.c_str(), arg.c_str(), (const char *)0);
             exit(0);
         }
 	}

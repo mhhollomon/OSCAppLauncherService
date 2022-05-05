@@ -42,17 +42,17 @@ class OSCMessage {
 				else {
 					throw std::runtime_error("Not an integer argument type");
 				}
-			} else {
-				throw std::runtime_error("unknown type");
-			}
-		}
-		template<> auto get<std::string>() const -> std::string  {
-			if (isString()) {
-				return sarg_;
-			}
-			else {
-				throw std::runtime_error("Not a string argument type");
-			}
+            } else if constexpr (std::is_same_v<std::string, T>) {
+
+                if (isString()) {
+                    return sarg_;
+                }
+                else {
+                    throw std::runtime_error("Not a string argument type");
+                }
+            } else {
+                throw std::runtime_error("unknown type");
+            }
 		}
 
 	};
