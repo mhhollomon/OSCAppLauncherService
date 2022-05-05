@@ -32,7 +32,9 @@ inline bool extract(const std::basic_string<CharT>& value, std::basic_string<Cha
 int main(int argc, char**argv) {
 	Platform platform;
 
-	if (argc < 2)
+	std::cout << "argc = " << argc << "\n";
+
+	if (argc < 3)
 		throw std::runtime_error("Not enough arguments");
 
 	int port = 0;
@@ -40,6 +42,18 @@ int main(int argc, char**argv) {
 	std::cout << "using port : " << port << "\n";
 
 	auto osc_msg = OSCMessage(argv[2]);
+
+	if (argc > 3) {
+		auto arg_spec = std::string_view(argv[3]);
+		if (arg_spec[1] != ':') {
+			std::cerr << "Argument not in the correct format\n";
+			exit(2);
+		}
+		osc_msg.add_arg(arg_spec[0], arg_spec.substr(2));
+	}
+
+	std::cout << "Got here\n";
+	osc_msg.to_stream(std::cout);
 		
 	std::unique_ptr<OSCSocket> socket = platform.create_socket(port, SocketDirection::WRITE);
 

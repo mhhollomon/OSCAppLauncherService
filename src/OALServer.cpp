@@ -73,7 +73,10 @@ int main() {
 
 		auto msg = socket->recieve_osc();
 
-		std::cout << "Data: " << msg.address() << "\n";
+		std::cout << "Data: ";
+		msg.to_stream(std::cout);
+
+		// Processing.
 		if (msg.address().compare("/exit") == 0) {
 			std::cout << "Exiting\n";
 			break;
@@ -82,7 +85,9 @@ int main() {
 		if (msg.hierarchy_match("/launch")) {
 			auto key = msg.method_name();
 			if (program_map.find(key) != program_map.end()) {
+
 				std::cout << "Starting program " << program_map.at(key) << "\n";
+
 				app_launcher.launch_app(program_map.at(key));
 			}
 			else {

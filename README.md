@@ -10,7 +10,8 @@ It will most likely grow well beyond that.
 ## V0.2.0 Changes
 
 - ported to linux.
-- Changed format  and name of OALServer config file.
+- Changed format and name of OALServer config file.
+- Handle int32, string, and blob parameters in OSC messages.
 
 
 ## OALServer
@@ -51,8 +52,14 @@ Otherwise it does nothing.
 
 Small utility to send OSC messages via UDP on `127.0.0.1:<port>`. The port and OSC path are given on the command line.
 
+One parameter can be added to the message by appending it to the command line. The type indicator is put before the data.
+
 ```
-OSCSend.exe 7777 /launch/notepad
+# send message with string parameter.
+OSCSend.exe 7777 /launch/notepad "s:random text"
+
+#send message with int32 parameter
+OSCSend.exe 777 /launch/notepad i:42
 ```
 
 ## Integrating with Open Stage Control
