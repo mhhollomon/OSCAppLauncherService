@@ -12,6 +12,7 @@ It will most likely grow well beyond that.
 - ported to linux.
 - Changed format and name of OALServer config file.
 - Handle int32, string, and blob parameters in OSC messages.
+- allow passing a single string parameter to the launched application.
 
 
 ## OALServer
@@ -42,11 +43,13 @@ if the path in the datagram is `/exit`, it will shutdown.
 
 Otherwise it does nothing.
 
+If the OSC message has at least one parameter and the first parameter is a string, that string is 
+passed to the application as its first command line parameter (argv[1]).
+
 - Only listens to UDP
 - Currently, only listens to localhost interface.
 - No arguments can be sent to the application.
 - Does not handle OSC bundles
-- Ignores any arguments in the OSC message.
 
 ## OALSend
 
