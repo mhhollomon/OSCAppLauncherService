@@ -6,47 +6,22 @@
 #include <osc_socket.hpp>
 
 
-#include <unistd.h>
-#include <exception>
+namespace Platform {
 
-class ApplicationController : public ApplicationControllerBase {
-public:
-	virtual void launch_app(std::string path_or_name) {
-        auto pid = fork();
-        if (pid == -1) {
-            throw std::runtime_error("Fork did not work");
-        } else if(pid > 0) {
+	std::string get_cfg_file_name();
 
-            // in the parent;
-            //
-        } else {
-            // in the child;
-            execl(path_or_name.c_str(), path_or_name.c_str(), (const char *)0);
-            exit(0);
-        }
-	}
 
-	virtual void launch_app(std::string path_or_name, std::string arg) {
-        auto pid = fork();
-        if (pid == -1) {
-            throw std::runtime_error("Fork did not work");
-        } else if(pid > 0) {
+	// Process Control
 
-            // in the parent;
-            //
-        } else {
-            // in the child;
-            execl(path_or_name.c_str(), path_or_name.c_str(), arg.c_str(), (const char *)0);
-            exit(0);
-        }
-	}
-};
+	void launch_app(std::string path_or_name);
+	void launch_app(std::string path_or_name, std::string arg);
 
-class Platform : public PlatformBase<OSCSocket, ApplicationController> {
-public:
-	virtual std::string get_cfg_file_name();
-	//virtual std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction);
-	//ApplicationController create_application_controller();
+	// Networking
 
-};
+	std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction);
+
+
+} // end namespace Platform
+
+
 
