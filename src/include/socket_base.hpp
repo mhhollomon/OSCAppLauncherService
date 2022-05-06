@@ -25,7 +25,6 @@ public :
 
 		this->send_raw(mesg);
 	}
-	virtual void close() = 0;
 
 	virtual ~OSCSocketBase() = default;
 

@@ -1,12 +1,14 @@
 #
 # OSCAppLauncherService/platform
 #
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.18)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(PLATFORM_DIR "win")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(PLATFORM_DIR "linux")
 else()
-	message(FATAL_ERROR "unknown platform")
+    message(FATAL_ERROR "unknown platform ${CMAKE_SYSTEM_NAME}")
 endif()
 
 ##
