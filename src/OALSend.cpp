@@ -6,6 +6,8 @@
 
 #include <platform.hpp>
 
+namespace Pl = Platform;
+
 // Helpers
 template <typename CharT, typename T>
 inline bool extract(const std::basic_string<CharT>& value, T& dst) {
@@ -30,12 +32,12 @@ inline bool extract(const std::basic_string<CharT>& value, std::basic_string<Cha
 
 
 int main(int argc, char**argv) {
-	Platform platform;
-
 	std::cout << "argc = " << argc << "\n";
 
-	if (argc < 3)
-		throw std::runtime_error("Not enough arguments");
+	if (argc < 3) {
+		std::cerr << "Not enough arguments\n";
+		exit(EXIT_FAILURE);
+	}
 
 	int port = 0;
 	extract(std::string(argv[1]), port);
@@ -47,7 +49,7 @@ int main(int argc, char**argv) {
 		auto arg_spec = std::string_view(argv[3]);
 		if (arg_spec[1] != ':') {
 			std::cerr << "Argument not in the correct format\n";
-			exit(2);
+			exit(EXIT_FAILURE);
 		}
 		osc_msg.add_arg(arg_spec[0], arg_spec.substr(2));
 	}
@@ -55,7 +57,7 @@ int main(int argc, char**argv) {
 	std::cout << "Got here\n";
 	osc_msg.to_stream(std::cout);
 		
-	std::unique_ptr<OSCSocket> socket = platform.create_socket(port, SocketDirection::WRITE);
+	std::unique_ptr<OSCSocket> socket = Pl::create_socket(port, SocketDirection::WRITE);
 
 
 	//send the message

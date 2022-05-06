@@ -3,6 +3,7 @@
 
 #include <libconfig.h++>
 #include <platform.hpp>
+namespace Pl = Platform;
 
 #include <exception>
 #include <map>
@@ -18,13 +19,11 @@ constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming da
 std::map<std::string, std::string> program_map;
 
 int main() {
-	Platform platform;
 
 	libconfig::Config cfg;
 
 
-	auto cfg_file = platform.get_cfg_file_name();
-	auto app_launcher = platform.create_application_controller();
+	auto cfg_file = Pl::get_cfg_file_name();
 
 
 	std::cout << "using config file = " << cfg_file << "\n";
@@ -56,7 +55,7 @@ int main() {
 		auto& launch_settings = cfg.lookup("launch");
 		if (!launch_settings.isGroup()) {
 			std::cerr << "The 'launch' configuration must be a group\n";
-			return(4);
+			return(EXIT_FAILURE);
 		}
 
 		for (int index = 0; index < launch_settings.getLength(); ++index) {
@@ -65,7 +64,7 @@ int main() {
 	}
 
 
-	std::unique_ptr<OSCSocket> socket = platform.create_socket(port, SocketDirection::READ);
+	std::unique_ptr<OSCSocket> socket = Pl::create_socket(port, SocketDirection::READ);
 
 	while (1) {
 		std::cout << "Waiting for data...\n";
@@ -91,13 +90,13 @@ int main() {
 					const std::string arg = msg.get_arg(0).get<std::string>();
 					std::cout << "Starting program " << program_map.at(key) << "( " << arg << " )\n";
 
-					app_launcher.launch_app(program_map.at(key), arg);
+					Pl::launch_app(program_map.at(key), arg);
 
 				}
 				else {
 					std::cout << "Starting program " << program_map.at(key) << "\n";
 
-					app_launcher.launch_app(program_map.at(key));
+					Pl::launch_app(program_map.at(key));
 
 				}
 			}
