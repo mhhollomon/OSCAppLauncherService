@@ -1,4 +1,3 @@
-
 #include <platform.hpp>
 
 #include <unistd.h>
@@ -8,11 +7,11 @@
 namespace Platform {
 
 // ===========================================================================
-std::string get_cfg_file_name() {
+std::string get_cfg_directory() {
 	std::string profile_path = getenv("HOME");
-	std::string ini_file = profile_path + "/.oal/" + CFG_FILE_NAME;
+	std::string dir = profile_path + "/.oal/" ;
 
-	return ini_file;
+	return dir;
 }
 
 // ===========================================================================

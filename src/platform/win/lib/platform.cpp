@@ -1,4 +1,3 @@
-
 #include <platform.hpp>
 
 #define WIN32_LEAN_AND_MEAN
@@ -8,6 +7,17 @@
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
 namespace Platform {
+
+//=============================================================
+std::string get_cfg_directory() {
+	std::string profile_path = getenv("USERPROFILE");
+	std::string dir = profile_path + "\\Documents\\";
+
+	return dir;
+}
+
+//=============================================================
+
 
 void launch_app(std::string path_or_name) {
 	launch_app(path_or_name, "");
@@ -77,14 +87,6 @@ void launch_app(std::string path_or_name, std::string arg) {
 
 // ===============================================================
 
-std::string get_cfg_file_name() {
-	std::string profile_path = getenv("USERPROFILE");
-	std::string ini_file = profile_path + "\\Documents\\" + CFG_FILE_NAME;
-
-	return ini_file;
-}
-
-//=============================================================
 std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction) {
 	return std::make_unique<OSCSocket>(port, direction);
 }

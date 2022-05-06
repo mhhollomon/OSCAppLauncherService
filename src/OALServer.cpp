@@ -1,7 +1,7 @@
 ﻿// OALServer.cpp 
 //
 
-#include <libconfig.h++>
+#include <config.hpp>
 #include <platform.hpp>
 namespace Pl = Platform;
 
@@ -18,41 +18,39 @@ constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming da
 
 std::map<std::string, std::string> program_map;
 
-int main() {
+int main(int argc, char** argv) {
 
-	libconfig::Config cfg;
+	auto cfg_file = Pl::get_cfg_directory() + "OALServer.cfg";
 
-
-	auto cfg_file = Pl::get_cfg_file_name();
-
+	if (argc >= 2) {
+		cfg_file = std::string(argv[1]);
+	}
 
 	std::cout << "using config file = " << cfg_file << "\n";
 
-	try {
-		cfg.readFile(cfg_file);
 
-	} catch (const libconfig::FileIOException& fioex)	{
+	config_ptr cfg;
+
+	try {
+		cfg = read_config_file(cfg_file, true);
+	}
+	catch (const libconfig::FileIOException& fioex) {
 		std::cerr << "I/O error while reading file." << std::endl;
 		return(EXIT_FAILURE);
-	}	catch (const libconfig::ParseException& pex)  {
+	}
+	catch (const libconfig::ParseException& pex) {
 		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
 			<< " - " << pex.getError() << std::endl;
 		return(EXIT_FAILURE);
 	}
 
-	// Make sure everybody agrees on where we are in the output stream.
-	std::cout.flush();
-	std::cout.sync_with_stdio();
-
-	// libconfig doesn't give a stream interface - grr 
-	cfg.write(stdout);
 
 	int port = DEFAULT_PORT;
-	cfg.lookupValue("server.port", port);
+	cfg->lookupValue("server.port", port);
 	std::cout << "using port : " << port << "\n";
 
-	if (cfg.exists("launch")) {
-		auto& launch_settings = cfg.lookup("launch");
+	if (cfg->exists("launch")) {
+		auto& launch_settings = cfg->lookup("launch");
 		if (!launch_settings.isGroup()) {
 			std::cerr << "The 'launch' configuration must be a group\n";
 			return(EXIT_FAILURE);

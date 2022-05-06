@@ -39,6 +39,7 @@ target_link_libraries(OALServer
         lib_include
 		${config_lib}
 		osc_objlib
+		config_objlib
 		platform_objlib
 	)
 
@@ -58,4 +59,21 @@ target_link_libraries(OALSend
 		platform_objlib
 	)
 
+########## OALMidi2osc
+
+add_executable(OALMidi2osc)
+
+target_sources(OALMidi2osc
+	PRIVATE
+		"src/OALMidi2osc.cpp"
+	)
+
+target_link_libraries(OALMidi2osc
+    PRIVATE
+        lib_include
+		${config_lib}
+		osc_objlib
+		config_objlib
+		platform_objlib
+	)
 # TODO: Add tests and install targets if needed.

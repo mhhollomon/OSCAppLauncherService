@@ -42,6 +42,25 @@ target_link_libraries(osc_objlib
         lib_include
     )
 
+##
+## config_objlib
+##
+add_library(config_objlib OBJECT)
+
+target_sources(config_objlib
+    PRIVATE
+        "lib/config.cpp"
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/config.hpp"
+    )
+
+target_link_libraries(config_objlib
+    PRIVATE
+    	${config_lib}
+
+    PUBLIC
+        lib_include
+    )
 
 # this needs to come last so the platform can use stuff in lib if needed.
 add_subdirectory(platform)
