@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <sstream>
 
 #include <platform.hpp>
 #include <config.hpp>
@@ -13,30 +14,350 @@
 
 #include <deque>
 #include <map>
+#include <string>
+#include <array>
+#include <charconv>
+#include <string_view>
+#include <iomanip>
 
 #include <mmeapi.h>
 
 #pragma comment(lib,"Winmm.lib")
 
 namespace Pl = Platform;
+using namespace std::string_literals;
 
-struct midi {
-	int command;
-	int data1;
-	int data2;
 
-	midi() = default;
+std::map<std::string, byte> midi_commands = { {"noteon", 0x90}, {"noteoff", 0x80}, {"cc", 0xb0}, {"prog", 0xc0} };
+std::map<byte, std::string> midi_to_string = { {0x90, "noteon"}, {0x80, "noteoff"}, {0xb0, "cc"}, {0xc0, "prog"} };
 
-	midi(int word) : command(word & 0xff),
-		data1((word >> 8) & 0xff), data2((word >> 16) & 0xff) {}
+std::array<std::string, 12> midi_note_string = { "C", "C#", "D", "D#",
+	"E", "F", "F#", std::string("G"), std::string("G#"), std::string("A"),
+	std::string("A#"), std::string("B")};
+
+std::map<std::string, int> midi_name_to_offset = {
+	{ "C", 0 },	
+	{ "C#", 1 }, {"Db", 1},	
+	{ "D", 2 },
+	{ "D#", 3 }, { "Eb" , 3 },
+	{ "E", 4},
+	{ "F", 5},
+	{ "F#", 6}, { "Gb", 6},
+	{ "G", 7},
+	{ "G#", 8}, {"Ab", 8 },
+	{ "A", 9 },
+	{ "A#", 10 }, {"Bb", 10 },
+	{ "B", 11 },
+
 };
 
-std::deque<midi> midi_queue;
+std::string note_num_to_name(byte note_num) {
+
+	auto divres = div(int(note_num), 12);
+
+	int octave = divres.quot - 2;
+	auto pitch = midi_note_string[divres.rem];
+
+	std::ostringstream ss;
+
+	ss << pitch << octave;
+
+	return ss.str();
+}
+
+// midi notes are 0 -127 - return 255 of error.
+constexpr byte NOTE_ERROR = 255;
+
+byte note_name_to_num(std::string_view name) {
+	size_t pos = 0;
+	std::string pitch_name;
+	byte retval = NOTE_ERROR;
+
+	if (name[1] == 'b' || name[1] == '#') {
+		pitch_name = std::string(name.substr(0, 2));
+		pos = 2;
+	}
+	else {
+		pitch_name = std::string(name.substr(0, 1));
+		pos = 1;
+	}
+	auto& iter = midi_name_to_offset.find(pitch_name);
+	if (iter == midi_name_to_offset.end()) {
+		std::cerr << "Invalid pitch name " << std::quoted(pitch_name) << "\n";
+		return NOTE_ERROR;
+	} 
+	else
+		retval = iter->second;
+
+	std::string octave_name = std::string(name.substr(pos));
+	int octave_number = -100;
+	auto res = std::from_chars(octave_name.c_str(), octave_name.c_str() + octave_name.size(), octave_number);
+	if (octave_number > 8 || octave_number < -2) {
+		std::cerr << "Octave number in note name " << std::quoted(name) << " is invalid (-2 to 8)\n";
+		return NOTE_ERROR;
+	}
+
+	retval += (octave_number + 2) * 12;
+
+	return retval;
+}
+
+struct midi_event {
+	byte command;
+	byte channel;
+	byte data1;
+	byte data2;
+
+	midi_event() = default;
+
+	midi_event(int word) : command(word & 0xf0), channel(word & 0x0f),
+		data1((word >> 8) & 0xff), data2((word >> 16) & 0xff) {
+		channel += 1;
+	}
+
+	midi_event(const midi_event& x) = default;
+
+	midi_event & operator=(const midi_event& o) = default;
+
+	friend std::ostream& operator << (std::ostream& strm, const midi_event& me);
+};
+
+std::ostream& operator << (std::ostream& strm, const midi_event& me) {
+
+	auto& command_name = midi_to_string[me.command];
+	strm << "cmd=" << command_name  << "(" << std::hex << int(me.command) <<
+		") chan=" << std::dec << int(me.channel+1);
+
+	if (command_name == "noteon" || command_name == "noteoff") {
+		strm << " note=" << note_num_to_name(me.data1) << std::dec << "(" << int(me.data1) <<
+			") vel=" << std::hex << int(me.data2) << "\n";
+	}
+	else {
+		strm << std::hex <<
+			" d1=" << int(me.data1) << " d2=" << int(me.data2) << "\n";
+	}
+
+	return strm;
+
+}
+struct action {
+	enum action_type { OSC, MIDI } type = OSC;
+	std::string osc;
+	std::string path;
+	std::string arg;
+};
+
+
+struct map_rule {
+	midi_event event{};
+	bool use_d1 = false;
+	bool use_d2 = false;
+	bool valid = false;
+
+	action act;
+
+	friend std::ostream& operator <<(std::ostream& strm, const map_rule & mr);
+};
+
+std::ostream& operator <<(std::ostream& strm, const map_rule& mr) {
+
+	strm << mr.event;
+	strm << "use_d1=" << std::boolalpha << mr.use_d1 << " use_d2=" << mr.use_d2 << " valid =" << mr.valid<<"\n";
+
+	return strm;
+}
+
+struct midi_port {
+	std::string name;
+	int port_num;
+	std::string osc_port;
+	std::vector<map_rule> rule_list;
+};
+
+struct midi_queue_event {
+	midi_event me;
+	const midi_port* port;
+};
+
+struct osc_config {
+	enum TRANSPORT { UDP, TCP } transport_ = UDP;
+	std::string host_;
+	int port_;
+
+	osc_config() = default;
+	osc_config(std::string a, enum TRANSPORT t = UDP) : transport_(t), port_(-1) {
+		int pos = a.find(':');
+		if (pos == std::string::npos) {
+			throw std::runtime_error("Badly formed osc address - can't find colon : '"s + a + "'");
+		}
+
+		host_ = a.substr(0, pos);
+
+		std::from_chars(a.c_str() + pos + 1, a.c_str() + a.size(), port_);
+		if (port_ < 0) {
+			throw std::runtime_error("Badly formed osc address - bad port number: '"s + a + "'");
+		}
+
+		std::cout << "port_ =" << port_ << " host_=" << host_ << "\n";
+	}
+};
+
+std::map<std::string, osc_config> osc_ports;
+
+std::string default_osc_port;
+
+
+/*======================================================================
+* PARSE_RULE()
+* Parse config structure for a mapping rule.
+========================================================================*/
+map_rule parse_rule(libconfig::Setting& rule, std::string osc) {
+	map_rule retval;
+
+	bool error = false;
+
+	std::string cmd_name;
+	if (rule.exists("cmd")) {
+		cmd_name = rule.lookup("cmd").c_str();
+	}
+	else {
+		std::cerr << "Rule must contain 'cmd' parameter.\n";
+		error = true;
+	}
+
+	auto& cmd_iter = midi_commands.find(cmd_name);
+	if (cmd_iter == midi_commands.end()) {
+		std::cerr << "Unknown command in rule '" << cmd_name << "'\n";
+	}
+	else {
+		retval.event.command = cmd_iter->second;
+	}
+
+	if  (cmd_name == "noteon" || cmd_name == "noteoff") {
+		if (rule.exists("note")) {
+			auto& note_setting = rule.lookup("note");
+			byte note_num;
+			if (note_setting.isString()) {
+				std::string note_name = note_setting.c_str();
+				note_num = note_name_to_num(note_name);
+				if (note_num != NOTE_ERROR) {
+					retval.event.data1 = note_num;
+					retval.use_d1 = true;
+				}
+				else {
+					error = true;
+				}
+			}
+			else if (note_setting.isNumber()) {
+				int note_num = note_setting;
+				if (note_num > 127 || note_num < 0) {
+					std::cerr << "Note number is out of rage (0-127)\n";
+					error = true;
+				}
+				else {
+					retval.event.data1 = byte(note_num);
+					retval.use_d1 = true;
+				}
+			}
+		}
+
+		if (rule.exists("vel")) {
+			auto& vel_setting = rule.lookup("vel");
+			int vel;
+			if (vel_setting.isNumber()) {
+				vel = vel_setting;
+				if (vel > 127 || vel < 0) {
+					std::cerr << "Invalid velocity " << vel << " must be a whole number 0-127\n";
+					error = true;
+				}
+				else {
+					retval.event.data2 = byte(vel);
+					retval.use_d2 = true;
+				}
+			}
+		}
+	}
+
+	if (rule.exists("action")) {
+		auto const& action_setting = rule.lookup("action");
+
+		action new_act;
+		if (action_setting.exists("type")) {
+			auto const& type_setting = action_setting.lookup("type");
+			if (type_setting.isString()) {
+				std::string new_type = type_setting.c_str();
+				if (new_type == "osc"s) {
+					new_act.type = action::OSC;
+					new_act.osc = osc;
+				}
+				else {
+					std::cerr << "Invalid action type " << new_type << " (only \"osc\" currently supported)\n";
+					error = true;
+				}
+			}
+			else {
+				std::cerr << "'type' setting for action must be a string\n";
+				error = true;
+			}
+		}
+		else {
+			std::cerr << "Missing 'type' settingfor action\n";
+			error = true;
+		}
+		if (action_setting.exists("path")) {
+			auto const& path_setting = action_setting.lookup("path");
+			if (path_setting.isString()) {
+				new_act.path = path_setting.c_str();
+			}
+			else {
+				std::cerr << "'path' setting for action must be a string\n";
+				error = true;
+			}
+		}
+		else {
+			std::cerr << "Missing 'path' setting for action\n";
+			error = true;
+		}
+		if (action_setting.exists("arg")) {
+			auto const& arg_setting = action_setting.lookup("arg");
+			if (arg_setting.isString()) {
+				new_act.arg = arg_setting.c_str();
+			}
+			else {
+				std::cerr << "'arg' setting for action must be a string\n";
+				error = true;
+			}
+		}
+		retval.act = new_act;
+	}
+	else {
+		std::cerr << "No action exists for the rule\n";
+		error = true;
+	}
+
+
+	if (!error) retval.valid = true;
+
+	std::cout << "parsed rule = " << retval << "\n";
+
+	return retval;
+
+}
+
+
+std::map<std::string, midi_port> midi_ports;
+
+std::deque<midi_queue_event> midi_queue;
 
 // need to hold this to play with the queue
 std::mutex midi_queue_mtx;
 
 std::condition_variable midi_queue_cv;
+
+/*======================================================================
+* MIDIINPROC()
+* Callback for midi reader. Used by midi_Reader() thread.
+========================================================================*/
 
 void CALLBACK MidiInProc(
 	HMIDIIN   hMidiIn,
@@ -51,10 +372,11 @@ void CALLBACK MidiInProc(
 
 	case MIM_DATA:
 		{
-			std::cout << "cmd=" << std::hex << (midi_message & 0xff) << " d1=" << ((midi_message >> 8) & 0xff) << " d2=" << ((midi_message >> 16) & 0xff) << "\n";
+		midi_queue_event mqe{ midi_event{(int)midi_message}, (const midi_port*)dwInstance };
+			std::cout << "Message : " << mqe.me << "\n";
 
 			std::lock_guard<std::mutex> guard(midi_queue_mtx);
-			midi_queue.emplace_back(int(midi_message));
+			midi_queue.emplace_back(mqe);
 			midi_queue_cv.notify_all();
 		}
 
@@ -75,12 +397,12 @@ void CALLBACK MidiInProc(
 			int dstatus = midiInPrepareHeader(hMidiIn, header, sizeof(MIDIHDR));
 			if (dstatus != MMSYSERR_NOERROR) {
 				std::cerr << "error in prepare: " << dstatus << "\n";
-				exit(EXIT_FAILURE);
+				return;
 			}
 			dstatus = midiInAddBuffer(hMidiIn, header, sizeof(MIDIHDR));
 			if (dstatus != MMSYSERR_NOERROR) {
 				std::cout << "Error when calling midiInAddBuffer: " << dstatus << "\n";
-				exit(1);
+				return;
 			}
 		}
 		break;
@@ -95,18 +417,30 @@ bool ready_to_shutdown = false;
 std::condition_variable shutdown_cv;
 std::mutex shutdown_mtx;
 
-void midi_reader(int port) {
+/*======================================================================
+* MIDI_READER()
+* REad and queue midi inputs. Entry for thread.
+*
+* Not sure I really need this because of the call back struture ??
+========================================================================*/
+
+void midi_reader() {
 
 	std::unique_lock<std::mutex> lck(shutdown_mtx);
 
+	std::cout << "starting midi_reader()\n";
+
 	HMIDIIN handle;
 
-	if (midiInOpen(&handle, port, (DWORD_PTR)MidiInProc, port, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) {
-		std::cerr << "Failed to open the port\n";
-		return;
+	for (auto& port : midi_ports) {
+		std::cout << "opening " << port.first << "\n";
+		if (midiInOpen(&handle, port.second.port_num, (DWORD_PTR)MidiInProc, (DWORD_PTR) & (port.second), CALLBACK_FUNCTION) != MMSYSERR_NOERROR) {
+			std::cerr << "Failed to open the port " << port.first << "\n";
+			return;
+		}
+		midiInStart(handle);
 	}
 
-	midiInStart(handle);
 
 	shutdown_cv.wait(lck, []{ return ready_to_shutdown; });
 	lck.unlock();
@@ -116,6 +450,27 @@ void midi_reader(int port) {
 	std::cout << "midi reader shutting down\n";
 }
 
+/*======================================================================
+* TAKE_ACTION()
+========================================================================*/
+void take_action(map_rule const& rule, midi_event const& me) {
+	if (rule.act.type == action::OSC) {
+		std::cout << "osc port =" << rule.act.osc << "\n";
+		int port = osc_ports.find(rule.act.osc)->second.port_;
+		std::cout << "Talking OSC to port " << std::dec << port << "\n";
+		auto socket = Pl::create_socket(port, SocketDirection::WRITE);
+		OSCMessage msg{rule.act.path};
+		if (! rule.act.arg.empty()) 
+			msg.add_arg(rule.act.arg);
+
+		socket->send_osc(msg);
+
+	}
+}
+/*======================================================================
+* MIDI_PROCESSOR()
+* Process the midi inputs. ENtry for processing thread.
+========================================================================*/
 void midi_processor() {
 
 	std::unique_lock<std::mutex> lck(midi_queue_mtx);
@@ -131,30 +486,43 @@ void midi_processor() {
 			return;
 		}
 
-		midi m = midi_queue.front();
+		midi_queue_event mqe = midi_queue.front();
 		midi_queue.pop_front();
 
-		std::cout << "proc cmd=" << std::hex << m.command << " d1=" << m.data1 << " d2=" << m.data2 << "\n";
+		std::cout << "proc (" << mqe.port->name << ") :" << mqe.me << "\n";
+
+		bool found_rule = false;
+		for (auto& rule : mqe.port->rule_list) {
+
+			std::cout << "Looking at rule : " << rule << "\n";
+			if (rule.event.command == mqe.me.command &&
+				(!rule.use_d1 || rule.event.data1 == mqe.me.data1) &&
+				(!rule.use_d2 || rule.event.data2 == mqe.me.data2)) {
+				std::cout << "Matched rule! :" << rule << "\n";
+				found_rule = true;
+				take_action(rule, mqe.me);
+
+				break;
+			}
+		}
+		if (!found_rule) {
+			std::cout << "No matching rule - ignoring\n";
+		}
 	}
 
 
 }
 
+
 std::map<std::string, int> os_midi_ports_in;
 std::map<std::string, int> os_midi_ports_out;
 
-struct osc_config {
-	enum TRANSPORT { UDP, TCP } transport_ = UDP;
-	std::string address_;
 
-	osc_config() = default;
-	osc_config(std::string a, enum TRANSPORT t = UDP) : transport_(t), address_(a) {}
-};
 
-std::map<std::string, osc_config> osc_ports;
-
-std::string default_osc_port;
-
+/*======================================================================
+* ENUMERATE_MINI_PORTS()
+* Find all the midi ports the OS knows about and get port numbers, etc
+========================================================================*/
 void enumerate_midi_ports() {
 	auto port_count = midiInGetNumDevs();
 
@@ -187,6 +555,11 @@ void enumerate_midi_ports() {
 	}
 }
 
+/*======================================================================
+* COMPILE_CONFIG()
+* Run through the configuration and check for validity. 
+* Set up in-memory structures.
+========================================================================*/
 config_ptr compile_config(std::string cfg_file) {
 
 	config_ptr cfg;
@@ -267,6 +640,8 @@ config_ptr compile_config(std::string cfg_file) {
 
 	if (midi_group.isGroup()) {
 		for (auto& setting : midi_group) {
+			midi_port new_port{};
+			
 			std::string name = setting.getName();
 			if (setting.isGroup()) {
 				std::string midi_in;
@@ -289,9 +664,12 @@ config_ptr compile_config(std::string cfg_file) {
 					error_found = true;
 				}
 
+				new_port.name = name;
+				new_port.port_num = midi_port;
+
 				// "osc"
+				std::string osc_port;
 				if (setting.exists("osc")) {
-					std::string osc_port;
 					auto& osc_setting = setting.lookup("osc");
 					if (osc_setting.isString()) {
 						osc_port = osc_setting.c_str();
@@ -312,6 +690,8 @@ config_ptr compile_config(std::string cfg_file) {
 					error_found = true;
 				}
 
+				new_port.osc_port = osc_port;
+
 				// Parse "map"
 				// A list of groups that define a mapping.
 
@@ -320,10 +700,16 @@ config_ptr compile_config(std::string cfg_file) {
 					if (map_setting.isList()) {
 						for (auto& iter : map_setting) {
 							if (iter.isGroup()) {
-								//auto event_map = parse_event_map(iter);
+								auto rule = parse_rule(iter, new_port.osc_port);
+
+								if (rule.valid) {
+									new_port.rule_list.push_back(rule);
+								} else {
+									error_found = true;
+								}
 							}
 							else {
-								std::cerr << "entries in map for '" << name << "' must be groups (have brances)\n";
+								std::cerr << "entries in map for '" << name << "' must be groups (have braces)\n";
 								error_found = true;
 							}
 						}
@@ -343,6 +729,8 @@ config_ptr compile_config(std::string cfg_file) {
 				std::cerr << "Invalid configuration for midi." << name << " - it must be a group (have braces)\n";
 				error_found = true;
 			}
+
+			midi_ports.emplace(new_port.name, new_port);
 		}
 	}
 	else {
@@ -357,6 +745,9 @@ config_ptr compile_config(std::string cfg_file) {
 
 }
 
+/*======================================================================
+* MAIN()
+========================================================================*/
 int main(int argc, char** argv) {
 
 	std::string cfg_file = Pl::get_cfg_directory() + "OALMidi2osc.cfg";
@@ -366,9 +757,6 @@ int main(int argc, char** argv) {
 	}
 
 	std::cout << "using config file = " << cfg_file << "\n";
-
-
-
 
 	enumerate_midi_ports();
 
@@ -381,21 +769,7 @@ int main(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	std::string port_name = cfg->lookup("port");
-
-	int the_port;
-
-	auto iter = os_midi_ports_in.find(port_name);
-	if (iter != os_midi_ports_in.end()) {
-		the_port = iter->second;
-	}
-	else {
-		std::cerr << "Could not find input midi port\n";
-		return(EXIT_FAILURE);
-	}
-
-
-	std::thread reader = std::thread(midi_reader, the_port);
+	std::thread reader = std::thread(midi_reader);
 	std::thread processor = std::thread(midi_processor);
 
 	char c;

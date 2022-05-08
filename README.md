@@ -54,7 +54,7 @@ passed to the application as its first command line parameter (argv[1]).
 
 ## OALMidi2osc
 
-ONLY*WINDOWS* FOR THE MOMENT.
+_ONLY *WINDOWS* FOR THE MOMENT_.
 
 Server that can listen to some number of midi ports and output OSC message based on configured midi events.
 
@@ -62,17 +62,18 @@ Server that can listen to some number of midi ports and output OSC message based
 OALMidi2osc <config file>
 ```
 
-`<config file>` is optional. In not given it uses `%USER_PROFILE%\\Documents\\OALMidi2osc.cfg`.
+`<config file>` is optional. If not given, it uses `%USER_PROFILE%\\Documents\\OALMidi2osc.cfg`.
 
 Sample Config :
 
 ```
 
-// List of OSC addresses. Note tha "udp" is the only transport currently supported.
+// List of OSC addresses. Note that "udp" is the only transport currently supported.
 osc = {
 	// 'oal' will be the name of the port in the map section
 	oal = { 
 		address = "127.0.0.1:7777"
+		// optional - defaults to "udp"
 		transport = "udp"
 	}
 }
@@ -99,14 +100,19 @@ midi = {
 		map = (
 			{ 
 				// details of the midi event. Possible variants are:
-				// cmd = "noteon" (note=ii) (velocity=ii) -- note can either be a midi note number or note name(with octave)
-				// cmd = "noteoff" (note=ii) (velocity=ii) -- note can either be a midi note number or note name(with octave)
-				// cmd = "cc" (value=ii)
+				// cmd = "noteon" (note=ii) (vel=ii) -- note can either be a midi note number or note name(with octave)
+				// cmd = "noteoff" (note=ii) (vel=ii) -- note can either be a midi note number or note name(with octave)
+				// cmd = "cc" (num=ii) (value=ii)
+				// cmd = "prog" (num=ii)
+				// if a parameter isn't mentioned it is not used for matching.
+				// so, in this example a noteon for note 33 will trigger the action regardless of the velocity.
+				// Note that there is currently no way to tie this to a channel.
+				//
 				cmd = "noteon"; note=33;
 
 				// details of the OSC message to send
-				// It will be sent to the OSC port  given in the 'osc' setting above.
-				osc : { path="/launch/daw", args = [ "arg1" ] }
+				// It will be sent to the OSC port  given in the 'osc' setting above (or default, if not specified)
+				action : { type: "osc", path="/launch/daw", args = [ "arg1" ] }
 			},
 		)
 	}
