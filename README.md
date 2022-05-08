@@ -7,6 +7,11 @@ me to not only control my DAW but also start it using OSC.
 
 It will most likely grow well beyond that.
 
+## V0.3.0 Changes
+
+- Addition of the OALMidi2osc server (see below).
+- Fixes for OALServer when dealing with args to the new process on Windows.
+
 ## V0.2.0 Changes
 
 - ported to linux.
