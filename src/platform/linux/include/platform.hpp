@@ -8,7 +8,7 @@
 
 namespace Platform {
 
-	std::string get_cfg_file_name();
+	std::string get_cfg_directory();
 
 
 	// Process Control

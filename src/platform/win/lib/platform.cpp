@@ -1,4 +1,3 @@
-
 #include <platform.hpp>
 
 #define WIN32_LEAN_AND_MEAN
@@ -8,6 +7,17 @@
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
 namespace Platform {
+
+//=============================================================
+std::string get_cfg_directory() {
+	std::string profile_path = getenv("USERPROFILE");
+	std::string dir = profile_path + "\\Documents\\";
+
+	return dir;
+}
+
+//=============================================================
+
 
 void launch_app(std::string path_or_name) {
 	launch_app(path_or_name, "");
@@ -25,11 +35,13 @@ void launch_app(std::string path_or_name, std::string arg) {
 
 	if (!arg.empty()) {
 
+		std::cout << "There is an arg: '" << arg << "'\n";
+
 		// path to executable needs to be in quotes. Probably ought to quote everything.
 		std::string true_arg = std::string("\"") + path_or_name + std::string("\"") + std::string(" ") + arg;
 
 		// the args arg cannot be const, so copy to local buffer - sigh
-		char* buffer = new char[true_arg.size() + 1];
+		buffer = new char[true_arg.size() + 1];
 
 		memset(buffer, 0, true_arg.size() + 1);
 
@@ -77,14 +89,6 @@ void launch_app(std::string path_or_name, std::string arg) {
 
 // ===============================================================
 
-std::string get_cfg_file_name() {
-	std::string profile_path = getenv("USERPROFILE");
-	std::string ini_file = profile_path + "\\Documents\\" + CFG_FILE_NAME;
-
-	return ini_file;
-}
-
-//=============================================================
 std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction) {
 	return std::make_unique<OSCSocket>(port, direction);
 }

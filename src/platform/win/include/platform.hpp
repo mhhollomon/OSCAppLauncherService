@@ -8,7 +8,9 @@
 
 namespace Platform {
 
-	std::string get_cfg_file_name();
+
+	// Must include the directory separator on the end
+	std::string get_cfg_directory();
 
 
 	// Process Control
