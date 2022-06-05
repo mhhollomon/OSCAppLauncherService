@@ -289,6 +289,17 @@ map_rule parse_rule(libconfig::Setting& rule, std::string osc) {
 				if (new_type == "osc"s) {
 					new_act.type = action::OSC;
 					new_act.osc = osc;
+
+					if (action_setting.exists("addr")) {
+						auto const& address_setting = action_setting.lookup("addr");
+						if (address_setting.isString()) {
+							new_act.osc = address_setting.c_str();
+						}
+						else {
+							std::cerr << "address for osc action must be a string\n";
+							error = true;
+						}
+					}
 				}
 				else {
 					std::cerr << "Invalid action type " << new_type << " (only \"osc\" currently supported)\n";
@@ -301,7 +312,7 @@ map_rule parse_rule(libconfig::Setting& rule, std::string osc) {
 			}
 		}
 		else {
-			std::cerr << "Missing 'type' settingfor action\n";
+			std::cerr << "Missing 'type' setting for action\n";
 			error = true;
 		}
 		if (action_setting.exists("path")) {
