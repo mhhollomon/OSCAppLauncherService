@@ -24,13 +24,6 @@ void launch_app(std::string path_or_name) {
 }
 
 void launch_app(std::string path_or_name, std::string arg) {
-	STARTUPINFOA si;
-	PROCESS_INFORMATION pi;
-
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	ZeroMemory(&pi, sizeof(pi));
-
 	char* buffer = 0;
 
 	if (!arg.empty()) {
@@ -57,18 +50,6 @@ void launch_app(std::string path_or_name, std::string arg) {
 	if (buffer)
 		std::cout << "arg = '" << buffer << "' size = " << strlen(buffer) << "\n";
 
-	//auto ret_code = CreateProcessA(
-	//	path_or_name.c_str(),
-	//	buffer,
-	//	0,
-	//	0,
-	//	false,
-	//	CREATE_NEW_CONSOLE,
-	//	0,
-	//	0,
-	//	&si,
-	//	&pi
-	//);
 
 	auto ret_code = ShellExecuteA(NULL, NULL, path_or_name.c_str(), buffer, NULL, SW_SHOWNORMAL);
 	//std::cout << "After call to CP\n";
@@ -84,8 +65,6 @@ void launch_app(std::string path_or_name, std::string arg) {
 	}
 
 
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
 }
 
 // ===============================================================
