@@ -7,6 +7,13 @@ me to not only control my DAW but also start it using OSC.
 
 It will most likely grow well beyond that.
 
+## V0.4.0 Changes
+
+- In OALMidi2osc, add the ability for an action to set the OSC address. This allows each individual action
+  associated with a controller to go to a different OSC server if needed.
+- Support calling Powershell scripts (or really anything Windows knows how to run) in OALServer rather than just
+  executables.
+
 ## V0.3.0 Changes
 
 - Addition of the OALMidi2osc server (see below).
@@ -116,8 +123,11 @@ midi = {
 				cmd = "noteon"; note=33;
 
 				// details of the OSC message to send
-				// It will be sent to the OSC port  given in the 'osc' setting above (or default, if not specified)
-				action : { type: "osc", path="/launch/daw", args = [ "arg1" ] }
+				// Where to send can be given in the action in the addr key, or default via the osc tag about or
+				// defaulted by the global default_osc key.
+				// Currently only one arg can be defined. The OSC type will be deduced from the config type.
+				//
+				action : { type: "osc", addr = "oal", path="/launch/daw", arg = "arg1" }
 			},
 		)
 	}
