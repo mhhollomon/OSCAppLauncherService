@@ -182,7 +182,7 @@ struct midi_queue_event {
 struct osc_config {
 	enum TRANSPORT { UDP, TCP } transport_ = UDP;
 	std::string host_;
-	int port_;
+	int port_ = -1;
 
 	osc_config() = default;
 	osc_config(std::string a, enum TRANSPORT t = UDP) : transport_(t), port_(-1) {
@@ -714,8 +714,22 @@ config_ptr compile_config(std::string cfg_file) {
 								auto rule = parse_rule(iter, new_port.osc_port);
 
 								if (rule.valid) {
-									new_port.rule_list.push_back(rule);
+									if (!rule.act.osc.empty()) {
+
+										if (osc_ports.find(rule.act.osc) != osc_ports.end()) {
+											new_port.rule_list.push_back(rule);
+										}
+										else {
+											std::cerr << "Invalid OSC address " << rule.act.osc << " (not configured)\n";
+											error_found = true;
+										}
+									}
+									else {
+										std::cerr << "No OSC address was supplied (and no default) for entry in " << name << "\n";
+										error_found = true;
+									}
 								} else {
+									// parse_rule() output an error message, we just need to bubble up the indicator
 									error_found = true;
 								}
 							}
