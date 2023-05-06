@@ -11,7 +11,7 @@ class OSCMessage {
 
 	struct argument {
 		char atype_ = 'x';
-		long larg_;
+		long larg_ = 0;
 		std::string sarg_;
 
 		argument() = default;

@@ -6,11 +6,11 @@
 #include <ws2tcpip.h>
 
 #include <stdexcept>
+#include <string>
 
 class OSCSocket : public OSCSocketBase {
 	static constexpr int WS_VER = 0x0202;
 	static constexpr int BUFLEN = 512;
-	static constexpr char INTERFACE[] = "127.0.0.1";
 
 
 	SOCKET socket_;
@@ -18,7 +18,7 @@ class OSCSocket : public OSCSocketBase {
 
 public:
 
-	OSCSocket(int port, SocketDirection direction) {
+	OSCSocket(const std::string iface, int port, SocketDirection direction) {
 		WSADATA wsa;
 
 		//Initialise winsock
@@ -39,12 +39,14 @@ public:
 
 		//Prepare the sockaddr_in structure
 		socket_address_.sin_family = AF_INET;
-		inet_pton(socket_address_.sin_family, INTERFACE, &socket_address_.sin_addr.S_un.S_addr);
+		inet_pton(socket_address_.sin_family, iface.c_str(), &socket_address_.sin_addr.S_un.S_addr);
 		socket_address_.sin_port = htons(port);
 
 		if (direction == SocketDirection::READ) {
 
 			//Bind
+
+			std::cout << "Binding to " << iface << ":" << port << "\n";
 			if (bind(socket_, (struct sockaddr*)&socket_address_, sizeof(socket_address_)) == SOCKET_ERROR) {
 				//std::cout << "Bind failed with error code : " << WSAGetLastError();
 				//exit(EXIT_FAILURE);

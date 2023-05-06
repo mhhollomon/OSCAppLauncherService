@@ -46,6 +46,11 @@ int main(int argc, char** argv) {
 
 
 	int port = DEFAULT_PORT;
+	std::string host_addr = "127.0.0.1";
+
+	cfg->lookupValue("server.interface", host_addr);
+	std::cout << "using host address : " << host_addr << "\n";
+
 	cfg->lookupValue("server.port", port);
 	std::cout << "using port : " << port << "\n";
 
@@ -62,7 +67,7 @@ int main(int argc, char** argv) {
 	}
 
 
-	std::unique_ptr<OSCSocket> socket = Pl::create_socket(port, SocketDirection::READ);
+	std::unique_ptr<OSCSocket> socket = Pl::create_socket(host_addr, port, SocketDirection::READ);
 
 	while (1) {
 		std::cout << "Waiting for data...\n";

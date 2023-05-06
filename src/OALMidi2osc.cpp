@@ -469,7 +469,7 @@ void take_action(map_rule const& rule, midi_event const& me) {
 		std::cout << "osc port =" << rule.act.osc << "\n";
 		int port = osc_ports.find(rule.act.osc)->second.port_;
 		std::cout << "Talking OSC to port " << std::dec << port << "\n";
-		auto socket = Pl::create_socket(port, SocketDirection::WRITE);
+		auto socket = Pl::create_socket("127.0.0.1", port, SocketDirection::WRITE);
 		OSCMessage msg{rule.act.path};
 		if (! rule.act.arg.empty()) 
 			msg.add_arg(rule.act.arg);

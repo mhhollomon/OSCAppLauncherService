@@ -3,6 +3,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#include <string>
 
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
@@ -69,8 +70,8 @@ void launch_app(std::string path_or_name, std::string arg) {
 
 // ===============================================================
 
-std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction) {
-	return std::make_unique<OSCSocket>(port, direction);
+std::unique_ptr<OSCSocket> create_socket(const std::string iface, int port, SocketDirection direction) {
+	return std::make_unique<OSCSocket>(iface, port, direction);
 }
 
 

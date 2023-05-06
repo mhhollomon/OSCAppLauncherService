@@ -57,7 +57,7 @@ int main(int argc, char**argv) {
 	std::cout << "Got here\n";
 	osc_msg.to_stream(std::cout);
 		
-	std::unique_ptr<OSCSocket> socket = Pl::create_socket(port, SocketDirection::WRITE);
+	std::unique_ptr<OSCSocket> socket = Pl::create_socket("127.0.0.1", port, SocketDirection::WRITE);
 
 
 	//send the message
