@@ -13,6 +13,19 @@ namespace Pl = Platform;
 #include <iostream>
 #include <fstream>
 
+using namespace std::literals::string_literals;
+
+const std::string  CONFIG_SCHEMA = R"DELIM(
+server! : {
+	interface : { _t : string, _d : "127.0.0.1"; },
+	port : { _t : int, _d : 8888 };
+}
+
+launch! : {
+	*! : string
+}
+)DELIM";
+
 
 constexpr int DEFAULT_PORT = 8888;	//The port on which to listen for incoming data
 
@@ -28,42 +41,24 @@ int main(int argc, char** argv) {
 
 	std::cout << "using config file = " << cfg_file << "\n";
 
+	sc_ptr cfg = read_config_file(cfg_file, CONFIG_SCHEMA);
 
-	config_ptr cfg;
-
-	try {
-		cfg = read_config_file(cfg_file, true);
-	}
-	catch (const libconfig::FileIOException& fioex) {
-		std::cerr << "I/O error while reading file." << std::endl;
-		return(EXIT_FAILURE);
-	}
-	catch (const libconfig::ParseException& pex) {
-		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-			<< " - " << pex.getError() << std::endl;
+	
+	if (cfg->has_errors()) {
+		cfg->stream_errors(std::cerr);
 		return(EXIT_FAILURE);
 	}
 
+	int port = cfg->at_path("server.port").get<int>();
+	std::string host_addr = cfg->at_path("server.interface").get<std::string>();
 
-	int port = DEFAULT_PORT;
-	std::string host_addr = "127.0.0.1";
-
-	cfg->lookupValue("server.interface", host_addr);
 	std::cout << "using host address : " << host_addr << "\n";
-
-	cfg->lookupValue("server.port", port);
 	std::cout << "using port : " << port << "\n";
 
-	if (cfg->exists("launch")) {
-		auto& launch_settings = cfg->lookup("launch");
-		if (!launch_settings.isGroup()) {
-			std::cerr << "The 'launch' configuration must be a group\n";
-			return(EXIT_FAILURE);
-		}
+	auto& launch_settings = cfg->at_path("launch");
 
-		for (int index = 0; index < launch_settings.getLength(); ++index) {
-			program_map.insert(std::make_pair(std::string(launch_settings[index].getName()), std::string(launch_settings[index].c_str())));
-		}
+	for (const auto &[name, setting] : launch_settings.enumerate()) {
+		program_map.insert(std::make_pair(name, setting.get<std::string>().c_str()));
 	}
 
 

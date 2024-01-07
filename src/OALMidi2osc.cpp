@@ -531,7 +531,7 @@ std::map<std::string, int> os_midi_ports_out;
 
 
 /*======================================================================
-* ENUMERATE_MINI_PORTS()
+* ENUMERATE_MIDI_PORTS()
 * Find all the midi ports the OS knows about and get port numbers, etc
 ========================================================================*/
 void enumerate_midi_ports() {

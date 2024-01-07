@@ -18,7 +18,7 @@ namespace Platform {
 
 	// Networking
 
-	std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction);
+	std::unique_ptr<OSCSocket> create_socket(const std::string &addr, int port, SocketDirection direction);
 
 
 } // end namespace Platform

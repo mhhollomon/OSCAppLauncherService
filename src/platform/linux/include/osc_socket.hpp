@@ -17,7 +17,7 @@ class OSCSocket : public OSCSocketBase {
 
 public:
 
-	OSCSocket(int port, SocketDirection direction) {
+	OSCSocket(const std::string interface, int port, SocketDirection direction) {
 
 		//Create a socket
 		if ((socket_ = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -28,7 +28,7 @@ public:
 
 		//Prepare the sockaddr_in structure
 		socket_address_.sin_family = AF_INET;
-		inet_pton(socket_address_.sin_family, INTERFACE, &socket_address_.sin_addr.s_addr);
+		inet_pton(socket_address_.sin_family, interface.c_str(), &socket_address_.sin_addr.s_addr);
 		socket_address_.sin_port = htons(port);
 
 		if (direction == SocketDirection::READ) {

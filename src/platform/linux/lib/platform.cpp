@@ -38,8 +38,8 @@ void launch_app(std::string path_or_name, std::string arg) {
     }
 }
 // ===========================================================================
-std::unique_ptr<OSCSocket> create_socket(int port, SocketDirection direction) {
-    return std::make_unique<OSCSocket>(port, direction);
+std::unique_ptr<OSCSocket> create_socket(const std::string &addr, int port, SocketDirection direction) {
+    return std::make_unique<OSCSocket>(addr, port, direction);
 }
 
 } // end namespace Platform

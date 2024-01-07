@@ -57,6 +57,7 @@ target_sources(config_objlib
 target_link_libraries(config_objlib
     PRIVATE
     	${config_lib}
+        simpleConfig
 
     PUBLIC
         lib_include

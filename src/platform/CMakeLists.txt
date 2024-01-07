@@ -3,9 +3,9 @@
 #
 cmake_minimum_required(VERSION 3.18)
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (WIN32)
 	set(PLATFORM_DIR "win")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+elseif(UNIX)
     set(PLATFORM_DIR "linux")
 else()
     message(FATAL_ERROR "unknown platform ${CMAKE_SYSTEM_NAME}")
